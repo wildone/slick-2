@@ -43,12 +43,30 @@
                 <div class="Cell align-right" itemprop="author"><span class="author" itemscope itemtype="http://schema.org/Person">${'by' @ i18n}: <span itemprop="name">${view.page.author.firstName} ${view.page.author.lastName}</span></span>
                 </div>
             </div>
+            <div id="comments">
+            	<form class="Grid" id="comment-form" action="${resource.path}.comment.json" method="POST">
+            		<input type="text" name="author" class="Cell"/>
+            		<textarea name="comment" class="Cell"></textarea>
+            		<div class="g-recaptcha" data-sitekey="6LdTTiYTAAAAAI4WUM99zwgkiVEsHlpM06YoJJCX"></div>
+            		<input type="submit" class="Cell" value="Submit"/>
+            	</form>
+            	<div class="Grid comments-list" data-sly-list.comment="${view.page.comments}">
+            		<div class="Cell comment" id="${comment}">
+            			<p>${comment.comment}</p>
+            			<p>${comment.author}</p>
+            		</div>
+            	</div>
+            </div>
         </article>
     </section>
     </div>
+    <div id="messages"></div>
+    <script id="message" type="text/x-handlebars-template">
+        <div id="{{messageId}}" class="message {{responseType}} show"><strong>{{responseType}}</strong> {{responseMessage}}</div>
+    </script>
     <sly data-sly-include="partials/lightbox.html"/>
     <sly data-sly-use.footer="footer.html" data-sly-call="${footer.footer @ view=view, settings=settings}"/>
-    <sly data-sly-include="partials/footlibs.html"/>    
+    <sly data-sly-include="partials/footlibs.html"/>  
 </body>
 </html>
 </template>

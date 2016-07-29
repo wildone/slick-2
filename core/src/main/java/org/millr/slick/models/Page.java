@@ -169,4 +169,9 @@ public class Page
         Iterator<Resource> childs = resource.getChildren().iterator();
         return ResourceUtil.adaptTo(childs,Page.class);
     }
+    
+    public Iterator<Resource> getComments()
+    {
+        return resource.getChild("comments").getChildren().iterator();
+    }
 }
