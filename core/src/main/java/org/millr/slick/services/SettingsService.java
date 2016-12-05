@@ -27,6 +27,8 @@ public interface SettingsService {
     
     public static final String SYSTEM_ANALYTICS_SCRIPT = "system.analyticsScript";
     
+    public static final String SYSTEM_RECAPTCHA_SECRET = "system.recaptchaSecret";
+    
     public static final String SYSTEM_HEADER_IMAGE = "system.headerImage";
     
     public static final String SYSTEM_ACCENT_COLOR = "system.accentColor";
@@ -92,6 +94,21 @@ public interface SettingsService {
      * @return true if the save was successful.
      */
     boolean setAnalyticsScript(final String script);
+    
+    /**
+     * Get the analytics script.
+     *
+     * @return The secret.
+     */
+    String getRecaptchaSecret();
+    
+    /**
+     * Set the reCAPTCHA Secret.
+     *
+     * @param secret The reCAPTCHA secret.
+     * @return true if the save was successful.
+     */
+    boolean setRecaptchaSecret(final String secret);
     
     String getDefaultHeaderImage();
     

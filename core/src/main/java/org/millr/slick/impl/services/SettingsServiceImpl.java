@@ -59,6 +59,10 @@ import org.osgi.framework.Constants;
               value = SettingsServiceImpl.ANALYTICS_SCRIPT_DEFAULT_VALUE,
               label = "Analytics Script",
               description = "The script provided by your analytics service. This should include the <script> tag."),
+    @Property(name = SettingsServiceImpl.SYSTEM_RECAPTCHA_SECRET,
+              value = SettingsServiceImpl.RECAPTCHA_SECRET_DEFAULT_VALUE,
+              label = "ReCAPCHA Secret",
+              description = "The API secret provided by Google for ReCaptcha."),
     @Property(name = SettingsServiceImpl.SYSTEM_HEADER_IMAGE,
               value = SettingsServiceImpl.HEADER_IMAGE_DEFAULT_VALUE,
               label = "Header Image",
@@ -85,6 +89,8 @@ public class SettingsServiceImpl implements SettingsService {
     
     /** Default value for the analytics script */
     public static final String ANALYTICS_SCRIPT_DEFAULT_VALUE = "";
+    
+    public static final String RECAPTCHA_SECRET_DEFAULT_VALUE = "";
     
     /** Default value for the analytics script */
     public static final String ACCENT_COLOR_DEFAULT_VALUE = "0,148,68";
@@ -122,6 +128,16 @@ public class SettingsServiceImpl implements SettingsService {
     
     public boolean setAnalyticsScript(final String script) {
         return osgiService.setProperty(COMPONENT_PID, SYSTEM_ANALYTICS_SCRIPT, script);
+    }
+    
+    
+    public String getRecaptchaSecret() {
+        return osgiService.getStringProperty(COMPONENT_PID, SYSTEM_RECAPTCHA_SECRET, ANALYTICS_SCRIPT_DEFAULT_VALUE);
+    }
+
+    @Override
+    public boolean setRecaptchaSecret(String secret) {
+        return osgiService.setProperty(COMPONENT_PID, SYSTEM_RECAPTCHA_SECRET, secret);
     }
     
     public String getDefaultHeaderImage() {

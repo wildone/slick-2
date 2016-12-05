@@ -40,25 +40,26 @@ public class TrimString {
         if(contentString == null || contentString.trim().isEmpty()){
             LOGGER.info("String is empty");
             trimmedString = contentString;
-        }
-
-        try {
-            StringBuffer sb = new StringBuffer(contentString);
-            
-            int desiredLength = length;
-            int endIndex = sb.indexOf(" ",desiredLength);
-            
-            //If soft, remove three characters to make room for elipsis.
-            if(soft){
-                desiredLength = length - 3;
-                endIndex = sb.indexOf(" ",desiredLength);
-                contentString = escapeHtml(sb.insert(endIndex,"...").substring(0, endIndex+3));
-            } else {
-                contentString = escapeHtml(sb.substring(0, endIndex));
+        } else {
+            try {
+                StringBuffer sb = new StringBuffer(contentString);
+                
+                int desiredLength = length;
+                int endIndex = sb.indexOf(" ",desiredLength);
+                
+                //If soft, remove three characters to make room for elipsis.
+                if(soft){
+                    desiredLength = length - 3;
+                    endIndex = sb.indexOf(" ",desiredLength);
+                    contentString = escapeHtml(sb.insert(endIndex,"...").substring(0, endIndex+3));
+                } else {
+                    contentString = escapeHtml(sb.substring(0, endIndex));
+                }
+            } catch (Exception e) {
+                LOGGER.error("Exception: " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            LOGGER.error("Exception: " + e.getMessage(), e);
         }
+        
         trimmedString = contentString;
     }
 }

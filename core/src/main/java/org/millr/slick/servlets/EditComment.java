@@ -4,11 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import javax.jcr.Node;
 import javax.jcr.nodetype.NodeType;
@@ -27,6 +30,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.commons.json.JSONObject;
+import org.apache.tika.io.IOUtils;
 import org.millr.slick.SlickConstants;
 import org.millr.slick.services.UiMessagingService;
 import org.osgi.framework.ServiceReference;
@@ -86,16 +90,15 @@ public class EditComment extends SlingAllMethodsServlet {
 	
 	private Boolean validateCaptcha(String captcha, String remoteIp) {
 	    HttpURLConnection urlConn = null;
-        InputStream inStream = null;
-        String responseType;
-        String responseMessage;
-        int responseCode;
         BufferedReader reader = null;
-        StringBuilder stringBuilder;
-        
         
         LOGGER.info("*** CAPTCHA *** " + captcha);
         LOGGER.info("*** IP *** " + remoteIp);
+        
+        String charset = "UTF-8";
+        String secret = "6LdTTiYTAAAAAOpum_TRxlqYXq6QTqhBUpWAQMiU";
+        
+        String query = String.format("secret=%s&response=%s", secret, captcha);
 
         try {
             final URL url = new URL("https://www.google.com/recaptcha/api/siteverify");
@@ -103,23 +106,16 @@ public class EditComment extends SlingAllMethodsServlet {
             urlConn.setRequestMethod("POST");
             //urlConn.setAllowUserInteraction(false);
             urlConn.setDoOutput(true);
-            urlConn.setRequestProperty("secret", "");
-            urlConn.setRequestProperty("response", captcha);
-            urlConn.setRequestProperty("remoteip", "192.150.9.201");
-            
             urlConn.setReadTimeout(15*1000);
-            urlConn.connect();
             
-            reader = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
-            stringBuilder = new StringBuilder();
-            
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-              stringBuilder.append(line + "\n");
+            try (OutputStream output = urlConn.getOutputStream()) {
+                output.write(query.getBytes(charset));
             }
-            responseMessage = stringBuilder.toString();
-            LOGGER.info("*** RESPONSE MESSAGE *** " + responseMessage);
+            InputStream response = urlConn.getInputStream();
+            LOGGER.info("*** RESPONSE MESSAGE *** ");
+            String responseString = IOUtils.toString(response, charset);
+            LOGGER.info(responseString);
+            IOUtils.closeQuietly(response);
         }
         catch (Exception e)
         {
@@ -149,6 +145,7 @@ public class EditComment extends SlingAllMethodsServlet {
     private Resource getCommentsResource(ResourceResolver resolver, Resource postResource) {
         Resource commentsResource = postResource.getChild("comments");
         Map<String,Object> properties = new HashMap<String,Object>();
+        properties.put("jcr:primaryType", "sling:OrderedFolder");
         if(commentsResource == null) {
             try {
                 commentsResource = resolver.create(postResource, "comments", properties);
