@@ -17,6 +17,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.jackrabbit.JcrConstants;
+import org.apache.jackrabbit.api.security.user.User;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.PersistenceException;
@@ -26,11 +27,13 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.commons.json.JSONObject;
 import org.apache.tika.io.IOUtils;
 import org.millr.slick.services.CommentService;
+import org.millr.slick.services.CurrentUserService;
 import org.millr.slick.services.DispatcherService;
 import org.millr.slick.services.UiMessagingService;
 import org.millr.slick.utils.Externalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.CharEncoding;
 
 @SlingServlet(
         resourceTypes = "sling/servlet/default",
@@ -45,6 +48,9 @@ public class EditComment extends SlingAllMethodsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditComment.class);
     
     @Reference
+    private CurrentUserService currentUserService;
+    
+    @Reference
     private UiMessagingService uiMessagingService;
     
     @Reference
@@ -57,14 +63,28 @@ public class EditComment extends SlingAllMethodsServlet {
     DispatcherService dispatcherService;
     
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException{
-        LOGGER.info(">>>> Entering doPost");
+    	request.setCharacterEncoding(CharEncoding.UTF_8);
+    		// response.setContentType("text/html; charset=UTF-8");
+    		response.setCharacterEncoding(CharEncoding.UTF_8);
+    		LOGGER.info(">>>> Entering doPost");
         
         // Get our parent resource
         Resource postResource = request.getResource();
         String postPath = request.getResource().getPath();
         
-        String remoteIp = request.getRemoteAddr();
-        Boolean captchaValid = validateCaptcha(request.getParameter("g-recaptcha-response"), remoteIp);
+        // Detect a logged in user
+        String authorId = currentUserService.getUserId(request.getResourceResolver());
+        LOGGER.info("AUTHOR ID: " + authorId);
+        
+        boolean captchaValid = false;
+        if(!authorId.equals("anonymous")) {
+            captchaValid = true;
+        } else {
+            String remoteIp = request.getRemoteAddr();
+            LOGGER.info(">>EditComment validateCaptcha " + remoteIp);
+            captchaValid = validateCaptcha(request.getParameter("g-recaptcha-response"), remoteIp);
+        }
+        
         
         int responseCode;
         String responseType;
@@ -73,6 +93,8 @@ public class EditComment extends SlingAllMethodsServlet {
         
         String author = request.getParameter("author");
         String comment = request.getParameter("comment");
+        
+        
         
         // Replace basic HTML. Will break if HTML is malformed.
         comment = comment.replaceAll("<[^>]*>", "");
@@ -87,7 +109,12 @@ public class EditComment extends SlingAllMethodsServlet {
             
             commentProperties.put("comment", comment);
             commentProperties.put("author", author);
-            commentProperties.put("status", commentSettingsService.getCommentsDefaultStatus());
+            if(!authorId.equals("anonymous")) {
+                commentProperties.put("authorId", authorId);
+                commentProperties.put("status", "approved");
+            } else {
+                commentProperties.put("status", commentSettingsService.getCommentsDefaultStatus());
+            }
             commentProperties.put(JcrConstants.JCR_PRIMARYTYPE, "slick:comment");
             
             // Create our comment
@@ -103,6 +130,7 @@ public class EditComment extends SlingAllMethodsServlet {
                 responseContent.put("path", commentResource.getPath());
                 responseContent.put("comment", commentProperties.get("comment"));
                 responseContent.put("author", commentProperties.get("author"));
+                responseContent.put("status", commentProperties.get("status"));
             } catch(Exception e) {
                 e.printStackTrace();
             }
